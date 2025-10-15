@@ -5,9 +5,10 @@ const linkList = document.getElementById("link-list");
 
 inputButton.addEventListener("click", (e) => {
   myLinks.push(input.value);
-  console.log(myLinks);
-  linkList.innerHTML = "";
+  let listItems = "";
   for (let i = 0; i < myLinks.length; i++) {
-    linkList.innerHTML += "<li>" + myLinks[i] + "</li>";
+    listItems += "<li>" + myLinks[i] + "</li>";
+    console.log(listItems);
   }
+  linkList.innerHTML = listItems;
 });
