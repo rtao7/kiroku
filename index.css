@@ -16,11 +16,85 @@ body {
   padding: 20px;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 h2 {
   color: #2c3e50;
-  margin-bottom: 20px;
   font-size: 18px;
-  text-align: center;
+  margin: 0;
+}
+
+.settings-btn {
+  background: transparent;
+  color: #7f8c8d;
+  font-size: 18px;
+  padding: 4px 8px;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.settings-btn:hover {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+.settings-panel {
+  background: #ecf0f1;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.settings-panel.hidden {
+  display: none;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-content label {
+  font-size: 12px;
+  color: #34495e;
+  font-weight: 500;
+}
+
+.sync-status {
+  font-size: 11px;
+  color: #7f8c8d;
+  min-height: 16px;
+}
+
+.sync-status.success {
+  color: #27ae60;
+}
+
+.sync-status.error {
+  color: #e74c3c;
+}
+
+#sync-now-btn {
+  background: #9b59b6;
+}
+
+#sync-now-btn:hover {
+  background: #8e44ad;
+}
+
+#save-api-key-btn {
+  background: #16a085;
+}
+
+#save-api-key-btn:hover {
+  background: #138d75;
 }
 
 h3 {

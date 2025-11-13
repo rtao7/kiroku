@@ -8,7 +8,22 @@
   </head>
   <body>
     <div class="container">
-      <h2>Save Links for Later</h2>
+      <div class="header">
+        <h2>Save Links for Later</h2>
+        <button id="settings-toggle" class="settings-btn" title="Settings">⚙️</button>
+      </div>
+
+      <div id="settings-panel" class="settings-panel hidden">
+        <h3>Sync Settings</h3>
+        <div class="settings-content">
+          <label for="api-key-input">API Key (from kiroku web app):</label>
+          <input type="password" id="api-key-input" placeholder="Enter your API key" />
+          <button id="save-api-key-btn">Save API Key</button>
+          <button id="sync-now-btn">Sync Now</button>
+          <div id="sync-status" class="sync-status"></div>
+        </div>
+      </div>
+
       <div class="input-section">
         <input type="text" id="input-el" placeholder="Enter URL or use current page" />
         <button id="input-btn">Save Link</button>

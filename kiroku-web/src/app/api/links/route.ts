@@ -52,16 +52,50 @@ export async function GET(request: NextRequest) {
   }
 }
 
+async function fetchMetadata(url: string) {
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Kiroku/1.0)',
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      return { title: '', description: '' };
+    }
+
+    const html = await response.text();
+
+    let title = '';
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleMatch) {
+      title = titleMatch[1].trim();
+    }
+
+    let description = '';
+    const descriptionMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i) ||
+                            html.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i);
+    if (descriptionMatch) {
+      description = descriptionMatch[1].trim();
+    }
+
+    return { title, description };
+  } catch (error) {
+    return { title: '', description: '' };
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { url, title, description, tags } = body;
+    let { url, title, description, tags } = body;
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -80,6 +114,13 @@ export async function POST(request: NextRequest) {
 
       if (existingLink) {
         return NextResponse.json({ error: 'Link already exists' }, { status: 400 });
+      }
+
+      // Fetch metadata if title or description not provided
+      if (!title || !description) {
+        const metadata = await fetchMetadata(url);
+        if (!title) title = metadata.title;
+        if (!description) description = metadata.description;
       }
 
       const newLink = new Link({

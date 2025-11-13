@@ -1,11 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Kiroku - Save Links for Later",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Save links you can't read now for later. Keep your tabs clean.",
   "permissions": [
     "storage",
     "activeTab"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*.vercel.app/*"
   ],
   "action": {
     "default_popup": "index.html",

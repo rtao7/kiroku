@@ -4,12 +4,29 @@ const inputButton = document.getElementById("input-btn");
 const saveCurrentButton = document.getElementById("save-current-btn");
 const clearButton = document.getElementById("clear-btn");
 const linkList = document.getElementById("link-list");
+const settingsToggle = document.getElementById("settings-toggle");
+const settingsPanel = document.getElementById("settings-panel");
+const apiKeyInput = document.getElementById("api-key-input");
+const saveApiKeyButton = document.getElementById("save-api-key-btn");
+const syncNowButton = document.getElementById("sync-now-btn");
+const syncStatus = document.getElementById("sync-status");
 
-// Load saved links from Chrome storage
-chrome.storage.sync.get(['savedLinks'], function(result) {
+let apiKey = '';
+let syncInProgress = false;
+
+// Load saved links and API key from Chrome storage
+chrome.storage.sync.get(['savedLinks', 'apiKey'], function(result) {
   if (result.savedLinks) {
     myLinks = result.savedLinks;
     renderLinks();
+  }
+  if (result.apiKey) {
+    apiKey = result.apiKey;
+    apiKeyInput.value = apiKey;
+    // Auto-sync on startup if API key is set
+    setTimeout(() => {
+      syncWithServer();
+    }, 1000);
   }
 });
 
@@ -103,3 +120,106 @@ input.addEventListener("keypress", (e) => {
     inputButton.click();
   }
 });
+
+// Settings panel toggle
+settingsToggle.addEventListener("click", () => {
+  settingsPanel.classList.toggle("hidden");
+});
+
+// Save API key
+saveApiKeyButton.addEventListener("click", () => {
+  const newApiKey = apiKeyInput.value.trim();
+  if (newApiKey) {
+    apiKey = newApiKey;
+    chrome.storage.sync.set({ apiKey: apiKey }, () => {
+      showSyncStatus("API key saved!", "success");
+    });
+  } else {
+    showSyncStatus("Please enter an API key", "error");
+  }
+});
+
+// Sync now
+syncNowButton.addEventListener("click", () => {
+  if (!apiKey) {
+    showSyncStatus("Please set your API key first", "error");
+    return;
+  }
+  syncWithServer();
+});
+
+// Show sync status message
+function showSyncStatus(message, type = "") {
+  syncStatus.textContent = message;
+  syncStatus.className = `sync-status ${type}`;
+
+  if (type === "success" || type === "error") {
+    setTimeout(() => {
+      syncStatus.textContent = "";
+      syncStatus.className = "sync-status";
+    }, 3000);
+  }
+}
+
+// Sync with server
+async function syncWithServer() {
+  if (syncInProgress) {
+    showSyncStatus("Sync already in progress...", "");
+    return;
+  }
+
+  if (!apiKey) {
+    showSyncStatus("API key not set", "error");
+    return;
+  }
+
+  syncInProgress = true;
+  showSyncStatus("Syncing...", "");
+
+  try {
+    // First, push local links to server
+    const response = await fetch('http://localhost:3000/api/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        links: myLinks.map(url => ({ url }))
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to sync with server');
+    }
+
+    const syncResult = await response.json();
+
+    // Then, fetch all links from server
+    const fetchResponse = await fetch('http://localhost:3000/api/sync', {
+      headers: {
+        'x-api-key': apiKey,
+      },
+    });
+
+    if (!fetchResponse.ok) {
+      throw new Error('Failed to fetch links from server');
+    }
+
+    const data = await fetchResponse.json();
+
+    // Merge server links with local links
+    const serverUrls = data.links.map(link => link.url);
+    myLinks = [...new Set([...myLinks, ...serverUrls])]; // Remove duplicates
+
+    saveLinks();
+    renderLinks();
+
+    showSyncStatus(`Synced! ${syncResult.created} created, ${syncResult.skipped} skipped`, "success");
+  } catch (error) {
+    console.error('Sync error:', error);
+    showSyncStatus("Sync failed. Check your API key and connection.", "error");
+  } finally {
+    syncInProgress = false;
+  }
+}
